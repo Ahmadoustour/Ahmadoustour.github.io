@@ -148,6 +148,32 @@
             color: #666;
         }
         
+        .upload-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .upload-option-btn {
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-option-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
         .btn {
             display: inline-block;
             background-color: var(--error-color);
@@ -176,15 +202,7 @@
         }
         
         .btn-ready {
-            background-color: var(--success-color);
-        }
-        
-        .btn-convert {
-            background-color: var(--accent-color);
-        }
-        
-        .btn-convert:hover {
-            background-color: #c1121f;
+            background-color: var(--success-color) !important;
         }
         
         .options {
@@ -299,31 +317,6 @@
             display: none;
         }
         
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background-color: var(--success-color);
-            color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification.error {
-            background-color: var(--error-color);
-        }
-        
         footer {
             text-align: center;
             margin-top: 50px;
@@ -332,6 +325,39 @@
             font-size: 0.95rem;
             background: rgba(0, 0, 0, 0.2);
             border-radius: var(--border-radius);
+        }
+        
+        .separate-upload-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .separate-option {
+            border: 2px dashed #ccc;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .separate-option:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .separate-option i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .separate-option p {
+            font-size: 1rem;
+            color: #666;
+            margin: 0;
         }
         
         @media (max-width: 768px) {
@@ -347,10 +373,16 @@
             .converter-box {
                 padding: 20px;
             }
+            
+            .upload-options {
+                flex-direction: column;
+            }
+            
+            .separate-upload-options {
+                flex-direction: column;
+            }
         }
     </style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7945112160790848"
-     crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container">
@@ -373,7 +405,7 @@
             <div class="file-drop-area" id="pdfDropArea">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <p class="file-msg">أسقط ملف PDF هنا أو انقر للاختيار</p>
-                <input type="file" id="pdfFile" class="file-input" accept="application/pdf" />
+                <input type="file" id="pdfFile" class="file-input" accept=".pdf,application/pdf" />
             </div>
             
             <div class="options">
@@ -402,10 +434,23 @@
         
         <div id="image-to-pdf" class="converter-box hidden">
             <h2><i class="fas fa-images"></i> تحويل صور إلى PDF</h2>
-            <div class="file-drop-area" id="imagesDropArea">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p class="file-msg">أسقط الصور هنا أو انقر للاختيار (متعدد)</p>
-                <input type="file" id="imageFiles" class="file-input" accept="image/*" multiple />
+            
+            <div class="separate-upload-options">
+                <div class="separate-option" id="fromFilesOption">
+                    <i class="fas fa-folder-open"></i>
+                    <p>من الملفات</p>
+                    <input type="file" id="studioInput" class="file-input" accept="image/*" multiple />
+                </div>
+                
+                <div class="separate-option" id="fromStudioOption">
+                    <i class="fas fa-images"></i>
+                    <p>من الاستديو</p>
+                    <input type="file" id="studioInput" class="file-input" accept="image/*" multiple />
+                </div>
+            </div>
+            
+            <div class="file-msg" id="imagesMessage" style="text-align: center; margin-top: 15px;">
+                اختر طريقة رفع الصور
             </div>
             
             <div class="options">
@@ -439,13 +484,8 @@
         </div>
         
         <footer>
-            <p>جميع الحقوق محفوظة @XAMX 2025</p>
+            <p>© 2023 محول الصور وPDF. جميع الحقوق محفوظة.</p>
         </footer>
-    </div>
-    
-    <div id="notification" class="notification">
-        <i class="fas fa-check-circle"></i>
-        <span id="notificationText"></span>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
@@ -454,8 +494,8 @@
         // عناصر DOM
         const pdfFileInput = document.getElementById('pdfFile');
         const imageFilesInput = document.getElementById('imageFiles');
+        const studioInput = document.getElementById('studioInput');
         const pdfDropArea = document.getElementById('pdfDropArea');
-        const imagesDropArea = document.getElementById('imagesDropArea');
         const convertPdfToImagesBtn = document.getElementById('convertPdfToImages');
         const convertImagesToPdfBtn = document.getElementById('convertImagesToPdf');
         const resultsSection = document.getElementById('resultsSection');
@@ -465,11 +505,12 @@
         const qualityValueSpan = document.getElementById('qualityValue');
         const pdfOrientationSelect = document.getElementById('pdfOrientation');
         const pdfSizeSelect = document.getElementById('pdfSize');
-        const notification = document.getElementById('notification');
-        const notificationText = document.getElementById('notificationText');
         const tabs = document.querySelectorAll('.tab');
         const pdfToImageSection = document.getElementById('pdf-to-image');
         const imageToPdfSection = document.getElementById('image-to-pdf');
+        const fromFilesOption = document.getElementById('fromFilesOption');
+        const fromStudioOption = document.getElementById('fromStudioOption');
+        const imagesMessage = document.getElementById('imagesMessage');
         
         // متغيرات التطبيق
         let uploadedPdfFile = null;
@@ -497,36 +538,33 @@
         function initDropAreas() {
             // لمنع السلوك الافتراضي للمتصفح عند السحب
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                [pdfDropArea, imagesDropArea].forEach(area => {
-                    area.addEventListener(eventName, preventDefaults, false);
-                });
+                pdfDropArea.addEventListener(eventName, preventDefaults, false);
                 document.addEventListener(eventName, preventDefaults, false);
             });
             
             // إضافة تأثير عند السحب فوق المنطقة
             ['dragenter', 'dragover'].forEach(eventName => {
-                [pdfDropArea, imagesDropArea].forEach(area => {
-                    area.addEventListener(eventName, highlight, false);
-                });
+                pdfDropArea.addEventListener(eventName, highlight, false);
             });
             
             ['dragleave', 'drop'].forEach(eventName => {
-                [pdfDropArea, imagesDropArea].forEach(area => {
-                    area.addEventListener(eventName, unhighlight, false);
-                });
+                pdfDropArea.addEventListener(eventName, unhighlight, false);
             });
             
             // معالجة الملفات المسقطة
             pdfDropArea.addEventListener('drop', handlePdfDrop, false);
-            imagesDropArea.addEventListener('drop', handleImagesDrop, false);
             
             // النقر على مناطق السحب لفتح محدد الملفات
             pdfDropArea.addEventListener('click', () => pdfFileInput.click());
-            imagesDropArea.addEventListener('click', () => imageFilesInput.click());
             
             // تغيير الملفات المحددة عبر المدخلات
             pdfFileInput.addEventListener('change', handlePdfSelect);
             imageFilesInput.addEventListener('change', handleImagesSelect);
+            studioInput.addEventListener('change', handleStudioSelect);
+            
+            // خيارات الرفع المنفصلة
+            fromFilesOption.addEventListener('click', () => imageFilesInput.click());
+            fromStudioOption.addEventListener('click', () => studioInput.click());
         }
         
         function preventDefaults(e) {
@@ -545,23 +583,21 @@
         function handlePdfDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
-            if (files.length > 0 && files[0].type === 'application/pdf') {
-                pdfFileInput.files = files;
+            // التحقق من أن الملف هو PDF
+            const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
+            if (pdfFiles.length > 0) {
+                pdfFileInput.files = createFileList(pdfFiles);
                 handlePdfSelect();
             } else {
-                showNotification('يرجى إسقاط ملف PDF صحيح', 'error');
+                alert('يرجى إسقاط ملف PDF صحيح');
             }
         }
         
-        function handleImagesDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0 && Array.from(files).every(file => file.type.startsWith('image/'))) {
-                imageFilesInput.files = files;
-                handleImagesSelect();
-            } else {
-                showNotification('يرجى إسقاط ملفات صور فقط', 'error');
-            }
+        // إنشاء FileList للتعامل مع الملفات المسقطة
+        function createFileList(files) {
+            const list = new DataTransfer();
+            files.forEach(file => list.items.add(file));
+            return list.files;
         }
         
         function handlePdfSelect() {
@@ -571,21 +607,33 @@
                 pdfDropArea.querySelector('.file-msg').textContent = fileName;
                 convertPdfToImagesBtn.disabled = false;
                 convertPdfToImagesBtn.classList.add('btn-ready');
-                
-                showNotification(`تم تحميل ملف PDF: ${fileName}`);
             }
         }
         
         function handleImagesSelect() {
             if (imageFilesInput.files.length > 0) {
-                uploadedImageFiles = Array.from(imageFilesInput.files);
+                // تصفية الملفات لاستبعاد غير الصور
+                uploadedImageFiles = Array.from(imageFilesInput.files).filter(file => file.type.startsWith('image/'));
+                
+                if (uploadedImageFiles.length === 0) {
+                    alert('يرجى اختيار ملفات صور فقط');
+                    return;
+                }
+                
                 const fileCount = uploadedImageFiles.length;
-                imagesDropArea.querySelector('.file-msg').textContent = 
-                    `${fileCount} ملف${fileCount > 1 ? 'ات' : ''} محدد${fileCount > 1 ? 'ة' : ''}`;
+                imagesMessage.textContent = `${fileCount} صورة محددة من الملفات`;
                 convertImagesToPdfBtn.disabled = false;
                 convertImagesToPdfBtn.classList.add('btn-ready');
-                
-                showNotification(`تم تحميل ${fileCount} صورة`);
+            }
+        }
+        
+        function handleStudioSelect() {
+            if (studioInput.files.length > 0) {
+                uploadedImageFiles = Array.from(studioInput.files);
+                const fileCount = uploadedImageFiles.length;
+                imagesMessage.textContent = `${fileCount} صورة محددة من الاستديو`;
+                convertImagesToPdfBtn.disabled = false;
+                convertImagesToPdfBtn.classList.add('btn-ready');
             }
         }
         
@@ -597,7 +645,7 @@
         // تحويل PDF إلى صور
         convertPdfToImagesBtn.addEventListener('click', async () => {
             if (!uploadedPdfFile) {
-                showNotification('يرجى اختيار ملف PDF أولاً', 'error');
+                alert('يرجى اختيار ملف PDF أولاً');
                 return;
             }
             
@@ -654,7 +702,6 @@
                 }
                 
                 resultsSection.classList.remove('hidden');
-                showNotification(`تم تحويل PDF إلى ${pdf.numPages} صور بنجاح`);
                 
                 // التمرير إلى قسم النتائج
                 setTimeout(() => {
@@ -662,7 +709,7 @@
                 }, 500);
             } catch (error) {
                 console.error('Error converting PDF to images:', error);
-                showNotification('حدث خطأ أثناء تحويل PDF إلى صور', 'error');
+                alert('حدث خطأ أثناء تحويل PDF إلى صور');
             } finally {
                 convertPdfToImagesBtn.disabled = false;
                 convertPdfToImagesBtn.innerHTML = '<i class="fas fa-sync-alt"></i> تحويل PDF إلى صور';
@@ -672,7 +719,7 @@
         // تحويل الصور إلى PDF
         convertImagesToPdfBtn.addEventListener('click', async () => {
             if (!uploadedImageFiles || uploadedImageFiles.length === 0) {
-                showNotification('يرجى اختيار صورة واحدة على الأقل', 'error');
+                alert('يرجى اختيار صورة واحدة على الأقل');
                 return;
             }
             
@@ -774,44 +821,22 @@
                 resultsContent.appendChild(downloadLink);
                 resultsSection.classList.remove('hidden');
                 
-                showNotification('تم تحويل الصور إلى PDF بنجاح');
-                
                 // التمرير إلى قسم النتائج
                 setTimeout(() => {
                     resultsSection.scrollIntoView({ behavior: 'smooth' });
                 }, 500);
             } catch (error) {
                 console.error('Error converting images to PDF:', error);
-                showNotification('حدث خطأ أثناء تحويل الصور إلى PDF', 'error');
+                alert('حدث خطأ أثناء تحويل الصور إلى PDF');
             } finally {
                 convertImagesToPdfBtn.disabled = false;
                 convertImagesToPdfBtn.innerHTML = '<i class="fas fa-sync-alt"></i> تحويل الصور إلى PDF';
             }
         });
         
-        // وظيفة لعرض الإشعارات
-        function showNotification(message, type = 'success') {
-            notificationText.textContent = message;
-            
-            if (type === 'error') {
-                notification.className = 'notification error';
-                notification.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + notification.innerHTML;
-            } else {
-                notification.className = 'notification';
-                notification.innerHTML = '<i class="fas fa-check-circle"></i> ' + notification.innerHTML;
-            }
-            
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-        
         // تهيئة التطبيق عند تحميل الصفحة
         window.addEventListener('DOMContentLoaded', () => {
             initDropAreas();
-            showNotification('مرحبًا بك في محول الصور وPDF!');
         });
     </script>
 </body>
